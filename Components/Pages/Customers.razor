@@ -1,0 +1,113 @@
+﻿@page "/"
+@using BlazorApp4.Models
+@inject IHttpClientFactory ClientFactory;
+@rendermode RenderMode.InteractiveServer
+
+<PageTitle>Customers</PageTitle>
+
+<div class="text-center p-2">
+    <h1 class="text-center">Customers list</h1>
+    <table class="table table-bordered table-striped table-sm">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Surname</th>
+                <th>Phone Number</th>
+                <th>Email</th>
+                <th>Change</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (CustomerService c in customers)
+            {
+                <tr>
+                    <td>@c.Name</td>
+                    <td>@c.Surname</td>
+                    <td>@c.PhoneNumber</td>
+                    <td>@c.Email</td>
+                    <td>
+                        <a class="btn btn-primary" @onclick="()=>Edit(c)">Изменить</a>
+                        <a class="btn btn-primary" @onclick="@(async ()=>await Delete(c.CustomerId))">Удалить</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<div>
+    <EditForm Model="@customer" OnSubmit="Submit">
+        <DataAnnotationsValidator/>
+        <ValidationSummary/>
+    <p>
+        Name: <br />
+        <InputText @bind-Value="customer.Name"/>
+    </p>
+    <p>
+        Surname: <br />
+        <InputText @bind-Value="customer.Surname"/>
+    </p>
+    <p>
+        Phone Number: <br />
+        <InputText @bind-Value="customer.PhoneNumber"/>
+    </p>
+    <p>
+        Email: <br />
+        <InputText @bind-Value="customer.Email" />
+    </p>
+        <button class="btn btn-primary" type="submit">Отправить</button>
+        <button class="btn btn-primary" type="reset" onclick="Reset">Очистить</button>
+    </EditForm>
+</div>
+
+@code
+{
+    List<CustomerService> customers = [];
+    CustomerService customer = new();
+    HttpClient httpClient = new HttpClient();
+
+    void Edit(CustomerService c)
+    {
+        customer.CustomerId = c.CustomerId;
+        customer.Name = c.Name;
+        customer.Surname = c.Surname;
+        customer.PhoneNumber = c.PhoneNumber;
+        customer.Email = c.Email;
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        httpClient = ClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri("http://localhost:5102/api/customer");
+        await LoadData();
+    }
+    async Task LoadData()
+    {
+        customers = await httpClient.GetFromJsonAsync<List<CustomerService>>(httpClient.BaseAddress) ?? customers;
+    }
+    async Task Submit()
+    {
+        if (customer.CustomerId == 0)
+            await httpClient.PostAsJsonAsync(httpClient.BaseAddress, customer);
+        else
+            await httpClient.PutAsJsonAsync(httpClient.BaseAddress, customer);
+        customer.CustomerId = 0;
+        customer.Name = "";
+        customer.Surname = "";
+        customer.PhoneNumber = "";
+        customer.Email = "";
+        await LoadData();
+    }
+    void Reset()
+    {
+        customer.CustomerId = 0;
+    }
+    async Task Update()
+    {
+        await httpClient.PutAsJsonAsync(httpClient.BaseAddress, customer);
+        await LoadData();
+    }
+    async Task Delete(int id)
+    {
+        await httpClient.DeleteAsync($"{httpClient.BaseAddress}/{id}");
+        await LoadData();
+    }
+}

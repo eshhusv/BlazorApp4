@@ -1,0 +1,88 @@
+﻿@page "/assignments"
+@using BlazorApp4.Models
+@inject IHttpClientFactory ClientFactory;
+@rendermode RenderMode.InteractiveServer
+
+<PageTitle>Assignments</PageTitle>
+
+<div class="text-center p-2">
+    <h1 class="text-center">Tasks list</h1>
+    <table class="table table-bordered table-striped table-sm">
+        <thead>
+            <tr>
+                <th>Task Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (TaskSercive c in assignments)
+            {
+                <tr>
+                    <td>@c.TaskName</td>
+                    <td>
+                        <a class="btn btn-primary" @onclick="()=>Edit(c)">Изменить</a>
+                        <a class="btn btn-primary" @onclick="@(async ()=>await Delete(c.TaskId))">Удалить</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<div>
+    <EditForm Model="@assignment" OnSubmit="Submit">
+        <DataAnnotationsValidator/>
+        <ValidationSummary/>
+        <p>
+            Name: <br />
+            <InputText @bind-Value="assignment.TaskName" />
+        </p> 
+        <button class="btn btn-primary" type="submit">Отправить</button>
+        <button class="btn btn-primary" type="reset" onclick="Reset">Очистить</button>
+    </EditForm>
+</div>
+
+@code
+{
+    List<TaskSercive> assignments = [];
+    TaskSercive assignment = new();
+    HttpClient httpClient = new HttpClient();
+
+    void Edit(TaskSercive c)
+    {
+        assignment.TaskId = c.TaskId;
+        assignment.TaskName = c.TaskName;
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        httpClient = ClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri("http://localhost:5102/api/assignment");
+        await LoadData();
+    }
+    async Task LoadData()
+    {
+        assignments = await httpClient.GetFromJsonAsync<List<TaskSercive>>(httpClient.BaseAddress) ?? assignments;
+    }
+    async Task Submit()
+    {
+        if (assignment.TaskId == 0)
+            await httpClient.PostAsJsonAsync(httpClient.BaseAddress, assignment);
+        else
+            await httpClient.PutAsJsonAsync(httpClient.BaseAddress, assignment);
+        assignment.TaskId = 0;
+        assignment.TaskName = "";
+        await LoadData();
+    }
+    void Reset()
+    {
+        assignment.TaskId = 0;
+    }
+    async Task Update()
+    {
+        await httpClient.PutAsJsonAsync(httpClient.BaseAddress, assignment);
+        await LoadData();
+    }
+    async Task Delete(int id)
+    {
+        await httpClient.DeleteAsync($"{httpClient.BaseAddress}/{id}");
+        await LoadData();
+    }
+}
