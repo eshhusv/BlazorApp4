@@ -1,0 +1,112 @@
+﻿@page "/executors"
+@using BlazorApp4.Models
+@inject IHttpClientFactory ClientFactory;
+@rendermode RenderMode.InteractiveServer
+
+<PageTitle>Executors</PageTitle>
+
+<h3>Executors list</h3>
+
+<div class="text-center p-2">
+    <h1 class="text-center">Customers list</h1>
+    <table class="table table-bordered table-striped table-sm">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Surname</th>
+                <th>Phone Number</th>
+                <th>Email</th>
+                <th>Change</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (ExecutorService e in executors)
+            {
+                <tr>
+                    <td>@e.Name</td>
+                    <td>@e.Surname</td>
+                    <td>@e.PhoneNumber</td>
+                    <td>@e.Email</td>
+                    <td>
+                        <a class="btn btn-primary" @onclick="()=>Edit(e)">Изменить</a>
+                        <a class="btn btn-primary" @onclick="@(async ()=>await Delete(e.executor_id))">Удалить</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<div>
+    <EditForm Model="@executor" OnSubmit="Submit">
+        <p>
+            Name: <br />
+            <InputText class="form-control" @bind-Value="executor.Name" />
+        </p>
+        <p>
+            Surname: <br />
+            <InputText class="form-control" @bind-Value="executor.Surname" />
+        </p>
+        <p>
+            Phone Number: <br />
+            <InputText class="form-control" @bind-Value="executor.PhoneNumber" />
+        </p>
+        <p>
+            Email: <br />
+            <InputText class="form-control" @bind-Value="executor.Email" />
+        </p>
+        <button class="btn btn-primary" type="submit">Отправить</button>
+        <button class="btn btn-primary" type="reset" onclick="Reset">Очистить</button>
+    </EditForm>
+</div>
+
+@code {
+    List<ExecutorService> executors = [];
+    ExecutorService executor = new();
+    HttpClient httpClient = new HttpClient();
+
+    void Edit(ExecutorService e)
+    {
+        executor.executor_id = e.executor_id;
+        executor.Name = e.Name;
+        executor.Surname = e.Surname;
+        executor.PhoneNumber = e.PhoneNumber;
+        executor.Email = e.Email;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        httpClient = ClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri("http://localhost:5102/api/executor");
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        executors = await httpClient.GetFromJsonAsync<List<ExecutorService>>(httpClient.BaseAddress) ?? executors;
+    }
+
+    async Task Submit()
+    {
+        if (executor.executor_id == 0)
+            await httpClient.PostAsJsonAsync(httpClient.BaseAddress, executor);
+        else
+            await httpClient.PutAsJsonAsync(httpClient.BaseAddress, executor);
+        executor.executor_id = 0;
+        executor.Name = "";
+        executor.Surname = "";
+        executor.PhoneNumber = "";
+        executor.Email = "";
+        await LoadData();
+    }
+
+    void Reset()
+    {
+        executor.executor_id = 0;
+    }
+
+    async Task Delete(int id)
+    {
+        await httpClient.DeleteAsync($"{httpClient.BaseAddress}/{id}");
+        await LoadData();
+    }
+}

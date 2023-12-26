@@ -1,9 +1,11 @@
-﻿@page "/assignments"
+﻿@page "/projects"
 @using BlazorApp4.Models
 @inject IHttpClientFactory ClientFactory;
 @rendermode RenderMode.InteractiveServer
 
-<PageTitle>Assignments</PageTitle>
+<PageTitle>Projects</PageTitle>
+
+<h1>Projects</h1>
 
 <div class="text-center p-2">
     <h1 class="text-center">Tasks list</h1>
@@ -12,7 +14,6 @@
             <tr>
                 <th>Task Name</th>
                 <th>Customer</th>
-                <th>Executor</th>
             </tr>
         </thead>
         <tbody>
@@ -21,7 +22,6 @@
                 <tr>
                     <td>@c.TaskName</td>
                     <td>@c.Customer</td>
-                    <td>@c.Executor</td>
                     <td>
                         <a class="btn btn-primary" @onclick="()=>Edit(c)">Изменить</a>
                         <a class="btn btn-primary" @onclick="@(async ()=>await Delete(c.TaskId))">Удалить</a>
@@ -50,31 +50,15 @@
                 }
             </InputSelect>
         </p>
-        <p>
-            Executor: <br />
-            <InputSelect class="form-control" @bind-Value="assignment.ExecutorId">
-                <option selected value="">None</option>
-                @foreach (var executor in ExecutorsList)
-                {
-                    <option value="@executor.executor_id">
-                        @(executor.Surname)
-                        @(executor.Name)
-                    </option>
-                }
-            </InputSelect>
-        </p>
+
         <button class="btn btn-primary" type="submit">Отправить</button>
         <button class="btn btn-primary" type="reset" onclick="Reset">Очистить</button>
     </EditForm>
 </div>
 
-@code
-{
+@code {
     List<TaskSercive> assignments = [];
-    List<ExecutorService> executors = [];
-    ExecutorService executor = new();
-    public CustomerService[] CustomersList { get; set; } = []; 
-    public ExecutorService[] ExecutorsList { get; set; } = []; 
+    public CustomerService[] CustomersList { get; set; } = [];
     TaskSercive assignment = new();
     HttpClient httpClient = new HttpClient();
     List<CustomersNames> list = [];
@@ -91,9 +75,7 @@
         httpClient.BaseAddress = new Uri("http://localhost:5102/api/assignment");
         await LoadData();
         List<CustomerService>? list = await httpClient.GetFromJsonAsync<List<CustomerService>>(new Uri("http://localhost:5102/api/customer"));
-        List<ExecutorService>? list2 = await httpClient.GetFromJsonAsync<List<ExecutorService>>(new Uri("http://localhost:5102/api/executor"));
         CustomersList = list.ToArray();
-        ExecutorsList = list2.ToArray();
     }
     async Task LoadData()
     {
@@ -103,18 +85,13 @@
         {
             CustomerService? s = await httpClient.GetFromJsonAsync<CustomerService>
                     (new Uri("http://localhost:5102/api/customer/" + assignments[i].TaskNavigationCustomerId));
-            ExecutorService? e = await httpClient.GetFromJsonAsync<ExecutorService>
-                    (new Uri("http://localhost:5102/api/executor/" + assignments[i].ExecutorId));
-
-            
             list.Add(new CustomersNames
                 {
                     TaskId = assignments[i].TaskId,
                     TaskName = assignments[i].TaskName,
                     TaskNavigationCustomerId = assignments[i].TaskNavigationCustomerId,
-                    Customer = s.Surname + " " + s.Name,
-                    Executor = e.Surname + " " + e.Name
-        });
+                    Customer = s.Surname + " " + s.Name
+                });
         }
     }
     async Task Submit()
@@ -148,6 +125,5 @@
         public string? TaskName { get; set; }
         public int TaskNavigationCustomerId { get; set; }
         public string? Customer { get; set; }
-        public string? Executor { get; set; }
     }
 }

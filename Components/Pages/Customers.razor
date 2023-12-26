@@ -36,23 +36,21 @@
 </div>
 <div>
     <EditForm Model="@customer" OnSubmit="Submit">
-        <DataAnnotationsValidator/>
-        <ValidationSummary/>
     <p>
         Name: <br />
-        <InputText @bind-Value="customer.Name"/>
+        <InputText class="form-control" @bind-Value="customer.Name" />
     </p>
     <p>
         Surname: <br />
-        <InputText @bind-Value="customer.Surname"/>
+        <InputText class="form-control" @bind-Value="customer.Surname" />
     </p>
     <p>
         Phone Number: <br />
-        <InputText @bind-Value="customer.PhoneNumber"/>
+        <InputText class="form-control" @bind-Value="customer.PhoneNumber" />
     </p>
     <p>
         Email: <br />
-        <InputText @bind-Value="customer.Email" />
+        <InputText class="form-control" @bind-Value="customer.Email" />
     </p>
         <button class="btn btn-primary" type="submit">Отправить</button>
         <button class="btn btn-primary" type="reset" onclick="Reset">Очистить</button>

@@ -8,5 +8,8 @@ namespace BlazorApp4.Models
 
         public string? TaskName { get; set; }
 
+        public int TaskNavigationCustomerId { get; set; }
+
+        public int ExecutorId { get; set; }
     }
 }
